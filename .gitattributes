@@ -1,8 +1,8 @@
-.android/* linguist-vendored=false
-.android/gradle/wrapper/* linguist-vendored=false
-*.js linguist-vendored=false
-*.css linguist-vendored=false
-*.html linguist-vendored=false
-*.kt linguist-vendored=false
-*.kts linguist-vendored=false
-*.xml linguist-vendored=false
+.android/* linguist-vendored
+.android/gradle/wrapper/* linguist-vendored
+*.js linguist-vendored
+*.css linguist-vendored
+*.html linguist-vendored
+*.kt linguist-vendored
+*.kts linguist-vendored
+*.xml linguist-vendored
