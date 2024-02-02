@@ -20,13 +20,14 @@ class MainActivity : Activity() {
         val webView = WebView(this).also(::setContentView)
 
         webView.settings.javaScriptEnabled = true
+        webView.settings.allowFileAccessFromFileURLs = true
         webView.addJavascriptInterface(
             object {
                 @JavascriptInterface
                 fun registerBroadcast(topic: String, action: String) {
                     runOnUiThread {
                         doRegisterReceiver(action) {
-                            webView.evaluateJavascript("""globalDispatch("$topic", '$it')""", null)
+                            webView.evaluateJavascript("$topic('$it')", null)
                         }
                     }
                 }
