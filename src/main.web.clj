@@ -19,7 +19,7 @@
     (do
       (set!
        (.-innerHTML (.querySelector document "#text1"))
-       (str "Battery: " battery_percent "% / " ALARM_PERCENT "%"))
+       (str "Battery: [ " battery_percent "% / " ALARM_PERCENT "% ]"))
 
       (if-let [_ (< (first percent_ref) ALARM_PERCENT)]
         (do
