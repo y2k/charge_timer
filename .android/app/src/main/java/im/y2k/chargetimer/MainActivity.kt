@@ -11,6 +11,6 @@ class MainActivity : Activity() {
 
         val webView = WebView(this).also(::setContentView)
 
-        mainAndroid(this@MainActivity, webView)
+        main(this@MainActivity, webView)
     }
 }

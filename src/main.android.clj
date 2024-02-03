@@ -1,11 +1,18 @@
 (ns im.y2k.chargetimer)
 
-(defn mainAndroid [^android.app.Activity activity ^android.webkit.WebView webView]
+(defn main [^android.app.Activity activity ^android.webkit.WebView webView]
   (let [webSettings (.getSettings webView)]
     (.setJavaScriptEnabled webSettings true)
     (.addJavascriptInterface
      webView
      (proxy [] []
+       android.webkit.JavascriptInterface
+       (play_alarm [_ ^Int sound]
+         (.runOnUiThread activity
+                         (fn []
+                           (let [notification (.getDefaultUri android.media.RingtoneManager sound)
+                                 r (.getRingtone android.media.RingtoneManager activity notification)]
+                             (.play r)))))
        android.webkit.JavascriptInterface
        (registerBroadcast [_ ^String topic ^String action]
          (.runOnUiThread activity
@@ -31,3 +38,7 @@
                         (.associate (fn [x] x)))]
          (callback (.toJson (com.google.gson.Gson.) allValues)))))
    (android.content.IntentFilter. action)))
+
+
+
+

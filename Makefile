@@ -8,6 +8,6 @@ build_kotlin:
 	clj2js kt src/main.android.clj > .android/app/src/main/java/im/y2k/chargetimer/GeneratedMain.kt
 
 build:
-	clj2js src/main.clj > .android/app/src/main/assets/js/main.js
+	clj2js src/main.web.clj > .android/app/src/main/assets/js/main.js
 
 .PHONY: run build_html build build_kotlin
