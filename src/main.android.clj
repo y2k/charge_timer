@@ -38,7 +38,3 @@
                         (.associate (fn [x] x)))]
          (callback (.toJson (com.google.gson.Gson.) allValues)))))
    (android.content.IntentFilter. action)))
-
-
-
-
