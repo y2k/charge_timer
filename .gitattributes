@@ -1,8 +1,0 @@
-.android/* linguist-vendored
-.android/gradle/wrapper/* linguist-vendored
-*.js linguist-vendored
-*.css linguist-vendored
-*.html linguist-vendored
-*.kt linguist-vendored
-*.kts linguist-vendored
-*.xml linguist-vendored
