@@ -1,8 +1,6 @@
-# run: build build_html build_kotlin
-# 	cd .build/.android && ./gradlew installDebug && adb shell am start -n im.y2k.chargetimer/.MainActivity
-
 run: build build_html build_kotlin
-	docker run -v ${PWD}/.build/temp:/root/.gradle -v ${PWD}/.build/android:/target y2khub/cljdroid build && \
+	docker run -v ${PWD}/.build/temp/android:/root/.android -v ${PWD}/.build/temp/gradle:/root/.gradle -v ${PWD}/.build/android:/target y2khub/cljdroid build && \
+	adb install -r .build/android/app/build/outputs/apk/debug/app-debug.apk && \
 	adb shell am start -n im.y2k.chargetimer/.MainActivity
 
 build_html: build
