@@ -1,16 +1,23 @@
+# run: build build_html build_kotlin
+# 	cd .build/.android && ./gradlew installDebug && adb shell am start -n im.y2k.chargetimer/.MainActivity
+
 run: build build_html build_kotlin
-	cd .build/.android && ./gradlew installDebug && adb shell am start -n im.y2k.chargetimer/.MainActivity
+	docker run -v ${PWD}/.build/temp:/root/.gradle -v ${PWD}/.build/android:/target y2khub/cljdroid build && \
+	adb shell am start -n im.y2k.chargetimer/.MainActivity
 
 build_html: build
-	node .build/.android/app/src/main/assets/js/main.js > .build/.android/app/src/main/assets/index.html
+	node .build/android/app/src/main/assets/js/main.js > .build/android/app/src/main/assets/index.html
 
 build_kotlin:
-	clj2js kt src/main.android.clj > .build/.android/app/src/main/java/im/y2k/chargetimer/GeneratedMain.kt
+	clj2js kt src/main.android.clj > .build/android/app/src/main/java/im/y2k/chargetimer/GeneratedMain.kt
 
 build:
-	clj2js src/main.web.clj > .build/.android/app/src/main/assets/js/main.js
+	clj2js src/main.web.clj > .build/android/app/src/main/assets/js/main.js
 
 docker_build:
-	cd .build && docker build --platform linux/amd64 .
+	cd .build && docker build --platform linux/amd64 -t y2khub/cljdroid .
+
+docker_extract:
+	cd .build && rm -rf android && docker run -v ${PWD}/.build/android:/target y2khub/cljdroid copy
 
 .PHONY: run build_html build build_kotlin docker_build

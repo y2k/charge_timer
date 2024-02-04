@@ -18,10 +18,18 @@ RUN yes | sdkmanager --licenses && \
 
 WORKDIR /app
 
-COPY .android/gradlew /app/gradlew
-COPY .android/gradle /app/gradle
-RUN ./gradlew --no-daemon
-COPY .android /app/
-RUN ./gradlew dependencies --no-daemon
+COPY android .
 
-RUN ./gradlew assembleDebug --no-daemon
+# RUN ls -la
+
+# RUN echo  $HOME
+
+# COPY .android/gradlew /app/gradlew
+# COPY .android/gradle /app/gradle
+# RUN ./gradlew --no-daemon
+# COPY .android /app/
+# RUN ./gradlew dependencies --no-daemon
+
+# RUN ./gradlew assembleDebug --no-daemon
+
+ENTRYPOINT [ "/bin/bash", "build.sh" ]
