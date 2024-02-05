@@ -1,26 +1,28 @@
-(ns im.y2k.chargetimer)
+(ns im.y2k.chargetimer
+  (:import [android.app Activity NotificationChannel Notification NotificationManager]
+           [android.webkit WebView JavascriptInterface]))
 
-(defn main [^android.app.Activity activity ^android.webkit.WebView webView]
+(defn main [^Activity activity ^WebView webView]
   (let [webSettings (.getSettings webView)]
     (.setJavaScriptEnabled webSettings true)
     (.addJavascriptInterface
      webView
      (proxy [] []
 
-       android.webkit.JavascriptInterface
+       JavascriptInterface
        (open_settings [_]
          (.runOnUiThread activity
                          (fn []
                           ;;  (let [i (android.content.Intent. "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS")]
                           ;;    (.startActivityForResult activity i 0))
-                           (let [nm (as (.getSystemService activity "notification") android.app.NotificationManager)
+                           (let [nm (as (.getSystemService activity "notification") NotificationManager)
                                  channel_id "def_id"
-                                 ch (android.app.NotificationChannel. channel_id "def_title" 3)]
+                                 ch (NotificationChannel. channel_id "def_title" 3)]
                              (.createNotificationChannel nm ch)
 
                              (.notify nm 1
                                       (->
-                                       (android.app.Notification.Builder. activity channel_id)
+                                       (Notification.Builder. activity channel_id)
                                        (.setSmallIcon android.R.drawable.ic_dialog_info)
                                        (.setContentTitle "Foo")
                                        (.setContentText "Text")
@@ -28,7 +30,7 @@
 
                              (println (str "FIXME: channel setted"))))))
 
-       android.webkit.JavascriptInterface
+       JavascriptInterface
        (play_alarm [_ ^Int sound]
          (.runOnUiThread activity
                          (fn []
@@ -42,7 +44,7 @@
                                    r (.getRingtone android.media.RingtoneManager activity notification)]
                                (.play r))))))
 
-       android.webkit.JavascriptInterface
+       JavascriptInterface
        (registerBroadcast [_ ^String topic ^String action]
          (.runOnUiThread activity
                          (fn []
