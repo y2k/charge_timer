@@ -6,13 +6,42 @@
     (.addJavascriptInterface
      webView
      (proxy [] []
+
+       android.webkit.JavascriptInterface
+       (open_settings [_]
+         (.runOnUiThread activity
+                         (fn []
+                          ;;  (let [i (android.content.Intent. "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS")]
+                          ;;    (.startActivityForResult activity i 0))
+                           (let [nm (as (.getSystemService activity "notification") android.app.NotificationManager)
+                                 channel_id "def_id"
+                                 ch (android.app.NotificationChannel. channel_id "def_title" 3)]
+                            ;;  (.createNotificationChannel nm ch)
+
+                             (.notify nm 1
+                                      (->
+                                       (android.app.Notification.Builder. activity channel_id)
+                                       (.setSmallIcon android.R.drawable.ic_dialog_info)
+                                       (.setContentTitle "Foo")
+                                       (.setContentText "Text")
+                                       .build))
+
+                             (println (str "FIXME: channel setted"))))))
+
        android.webkit.JavascriptInterface
        (play_alarm [_ ^Int sound]
          (.runOnUiThread activity
                          (fn []
-                           (let [notification (.getDefaultUri android.media.RingtoneManager sound)
-                                 r (.getRingtone android.media.RingtoneManager activity notification)]
-                             (.play r)))))
+                           (let [am (as (.getSystemService activity "audio") android.media.AudioManager)
+                                 sound_stream_id 5
+                                 max (.getStreamMaxVolume am sound_stream_id)]
+                             (println (str "FIXME: " (.getStreamVolume am sound_stream_id) " / " max))
+                             (.setStreamVolume am sound_stream_id max 0)
+                             (println (str "FIXME: " (.getStreamVolume am sound_stream_id) " / " max))
+                             (let [notification (.getDefaultUri android.media.RingtoneManager sound)
+                                   r (.getRingtone android.media.RingtoneManager activity notification)]
+                               (.play r))))))
+
        android.webkit.JavascriptInterface
        (registerBroadcast [_ ^String topic ^String action]
          (.runOnUiThread activity

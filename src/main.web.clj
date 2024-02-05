@@ -8,6 +8,7 @@
      [:h3 {:id "text1"} "..."]
      [:h3 {:id "text2"} "..."]
      [:button {:id "btn"} "Increment"]
+     [:button {:id "btn3"} "Open Settings"]
      [:button {:id "btn2"} "Test sound"]]
     [:script {:src "js/main.js"}]]])
 
@@ -34,10 +35,16 @@
 
 (defn- main []
   (.addEventListener
+   (.querySelector document "#btn3") "click"
+   (fn []
+     (.open_settings Android)))
+
+  (.addEventListener
    (.querySelector document "#btn2") "click"
    (fn []
      (set! (.-innerHTML (.querySelector document "#text2")) "BEFORE")
-     (.play_alarm Android 4)
+    ;;  (.play_alarm Android 4)
+     (.play_alarm Android 2)
      (set! (.-innerHTML (.querySelector document "#text2")) "AFTER")))
 
   (let [count_ref (Array/of 0)]
@@ -48,7 +55,8 @@
          (.push count_ref (+ 1 (.pop count_ref)))
          (set! (.-innerHTML (.querySelector document "#text2")) (.at count_ref 0))))))
 
-  (.registerBroadcast Android :charge_changed "android.intent.action.BATTERY_CHANGED"))
+  ;; (.registerBroadcast Android :charge_changed "android.intent.action.BATTERY_CHANGED")
+  )
 
 ;; Infrastructure
 
