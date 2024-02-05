@@ -16,7 +16,7 @@
                            (let [nm (as (.getSystemService activity "notification") android.app.NotificationManager)
                                  channel_id "def_id"
                                  ch (android.app.NotificationChannel. channel_id "def_title" 3)]
-                            ;;  (.createNotificationChannel nm ch)
+                             (.createNotificationChannel nm ch)
 
                              (.notify nm 1
                                       (->
