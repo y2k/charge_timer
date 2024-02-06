@@ -1,8 +1,19 @@
 (ns im.y2k.chargetimer
   (:import [android.app Activity NotificationChannel Notification NotificationManager]
-           [android.webkit WebView JavascriptInterface]))
+           [android.webkit WebView JavascriptInterface]
+           [android.content Intent Context IntentFilter BroadcastReceiver]
+           [android.media AudioManager RingtoneManager]))
 
 (defn main [^Activity activity ^WebView webView]
+  (defn play_alarm []
+    (let [am (as (.getSystemService activity "audio") AudioManager)
+          sound_stream_id 5
+          max (.getStreamMaxVolume am sound_stream_id)]
+      (.setStreamVolume am sound_stream_id max 0)
+      (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
+            r (.getRingtone RingtoneManager activity notification)]
+        (.play r))))
+
   (let [webSettings (.getSettings webView)]
     (.setJavaScriptEnabled webSettings true)
     (.addJavascriptInterface
@@ -13,7 +24,7 @@
        (open_settings [_]
          (.runOnUiThread activity
                          (fn []
-                          ;;  (let [i (android.content.Intent. "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS")]
+                          ;;  (let [i (Intent. "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS")]
                           ;;    (.startActivityForResult activity i 0))
                            (let [nm (as (.getSystemService activity "notification") NotificationManager)
                                  channel_id "def_id"
@@ -26,26 +37,14 @@
                                        (.setSmallIcon android.R.drawable.ic_dialog_info)
                                        (.setContentTitle "Foo")
                                        (.setContentText "Text")
-                                       .build))
-
-                             (println (str "FIXME: channel setted"))))))
+                                       .build))))))
 
        JavascriptInterface
-       (play_alarm [_ ^Int sound]
-         (.runOnUiThread activity
-                         (fn []
-                           (let [am (as (.getSystemService activity "audio") android.media.AudioManager)
-                                 sound_stream_id 5
-                                 max (.getStreamMaxVolume am sound_stream_id)]
-                             (println (str "FIXME: " (.getStreamVolume am sound_stream_id) " / " max))
-                             (.setStreamVolume am sound_stream_id max 0)
-                             (println (str "FIXME: " (.getStreamVolume am sound_stream_id) " / " max))
-                             (let [notification (.getDefaultUri android.media.RingtoneManager sound)
-                                   r (.getRingtone android.media.RingtoneManager activity notification)]
-                               (.play r))))))
+       (play_alarm [_]
+         (.runOnUiThread activity (fn [] (play_alarm))))
 
        JavascriptInterface
-       (registerBroadcast [_ ^String topic ^String action]
+       (register_broadcast [_ ^String topic ^String action]
          (.runOnUiThread activity
                          (fn []
                            (do_register_receiver
@@ -55,12 +54,12 @@
      "Android")
     (.loadUrl webView "file:///android_asset/index.html")))
 
-(defn do_register_receiver [^android.content.Context context ^String action ^"(String)->Unit" callback]
+(defn do_register_receiver [^Context context ^String action ^"(String)->Unit" callback]
   (.registerReceiver
    context
    (proxy
-    [android.content.BroadcastReceiver] []
-     (onReceive [_ ^android.content.Context context ^android.content.Intent intent]
+    [BroadcastReceiver] []
+     (onReceive [_ ^Context context ^Intent intent]
        (let [extras (requireNotNull intent.extras)
              allValues (->
                         extras
@@ -68,4 +67,4 @@
                         (.map (fn [key] (Pair. key (.get extras key))))
                         (.associate (fn [x] x)))]
          (callback (.toJson (com.google.gson.Gson.) allValues)))))
-   (android.content.IntentFilter. action)))
+   (IntentFilter. action)))

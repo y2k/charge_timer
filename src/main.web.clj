@@ -14,30 +14,28 @@
           (.push percent_ref battery_percent)
 
           (if (>= battery_percent ALARM_PERCENT)
-            (.play_alarm Android 4)
+            (.play_alarm Android)
             null))
         null))
     null))
 
 (.addEventListener
- (.querySelector document "#btn3") "click"
+ (.querySelector document "#btn_settings") "click"
  (fn []
    (.open_settings Android)))
 
 (.addEventListener
- (.querySelector document "#btn2") "click"
+ (.querySelector document "#btn_test_sound") "click"
  (fn []
    (set! (.-innerHTML (.querySelector document "#text2")) "BEFORE")
-    ;;  (.play_alarm Android 4)
-   (.play_alarm Android 2)
+   (.play_alarm Android)
    (set! (.-innerHTML (.querySelector document "#text2")) "AFTER")))
 
-(let [count_ref (Array/of 0)]
-  (.addEventListener
-   (.querySelector document "#btn") "click"
-   (let [count_ref (Array/of 0)]
-     (fn []
-       (.push count_ref (+ 1 (.pop count_ref)))
-       (set! (.-innerHTML (.querySelector document "#text2")) (.at count_ref 0))))))
+(.addEventListener
+ (.querySelector document "#btn_inc") "click"
+ (let [count_ref (Array/of 0)]
+   (fn []
+     (.push count_ref (+ 1 (.pop count_ref)))
+     (set! (.-innerHTML (.querySelector document "#text2")) (get count_ref 0)))))
 
-  ;; (.registerBroadcast Android :charge_changed "android.intent.action.BATTERY_CHANGED")
+(.register_broadcast Android :charge_changed "android.intent.action.BATTERY_CHANGED")

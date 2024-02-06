@@ -7,9 +7,9 @@
     [:main
      [:h3 {:id "text1"} "..."]
      [:h3 {:id "text2"} "..."]
-     [:button {:id "btn"} "Increment"]
-     [:button {:id "btn3"} "Open Settings"]
-     [:button {:id "btn2"} "Test sound"]]
+     [:button {:id "btn_inc"} "Increment"]
+     [:button {:id "btn_settings"} "Open Settings"]
+     [:button {:id "btn_test_sound"} "Test sound"]]
     [:script {:src "js/main.js"}]]])
 
 ;; Infrastructure
