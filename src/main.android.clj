@@ -16,9 +16,17 @@
 
   (let [webSettings (.getSettings webView)]
     (.setJavaScriptEnabled webSettings true)
+    (.setAllowUniversalAccessFromFileURLs webSettings true)
     (.addJavascriptInterface
      webView
      (proxy [] []
+
+       JavascriptInterface
+       (load_info [_]
+         (.runOnUiThread activity
+                         (fn []
+                           (let [m (android.app.job.JobInfo/getMinPeriodMillis)]
+                             (.evaluateJavascript webView (str "show_info('" m "')") null)))))
 
        JavascriptInterface
        (open_settings [_]
