@@ -1,4 +1,4 @@
-(defn- html []
+(defn- manifest []
   [:manifest {:xmlns:android "http://schemas.android.com/apk/res/android"}
    [:application {:android:allowBackup "true"
                   :android:dataExtractionRules "@xml/data_extraction_rules"
@@ -35,4 +35,4 @@
               (.map html_to_string)
               (.reduce (fn [a x] (str a x)) ""))
              "</" tag ">"))))
-  (println (html_to_string (html))))
+  (println (html_to_string (manifest))))

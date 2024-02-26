@@ -1,8 +1,26 @@
 (ns im.y2k.chargetimer
   (:import [android.app Activity NotificationChannel Notification NotificationManager]
            [android.webkit WebView JavascriptInterface]
-           [android.content Intent Context IntentFilter BroadcastReceiver]
-           [android.media AudioManager RingtoneManager]))
+           [android.content Intent Context IntentFilter BroadcastReceiver ComponentName]
+           [android.media AudioManager RingtoneManager]
+           [android.app.job JobScheduler JobParameters JobInfo]))
+
+(gen-class
+ :name MyJobService
+ :extends android.app.job.JobService
+ :prefix "_"
+ :methods [[onStartJob [JobParameters] Boolean]
+           [onStopJob [JobParameters] Boolean]])
+
+(defn _onStartJob [^MyJobService context ^JobParameters _]
+  (println "FIXME: onStartJob 1")
+  (let [result (.registerReceiver context null (IntentFilter. "android.intent.action.BATTERY_CHANGED"))]
+    (println (str "FIXME: onStartJob 2 - " result)))
+  false)
+
+(defn _onStopJob [^MyJobService _ ^JobParameters _]
+  (println "FIXME: onStopJob")
+  false)
 
 (defn main [^Activity activity ^WebView webView]
   (defn play_alarm []
@@ -22,34 +40,56 @@
      (proxy [] []
 
        JavascriptInterface
-       (load_info [_]
+       (start_job [_]
          (.runOnUiThread activity
                          (fn []
-                           (let [m (android.app.job.JobInfo/getMinPeriodMillis)]
-                             (.evaluateJavascript webView (str "show_info('" m "')") null)))))
+                           (println (str "FIXME: schedule() [1]"))
+                           (let [job_info (->
+                                           (JobInfo.Builder. 123 (ComponentName. activity "im.y2k.chargetimer.MyJobService"))
+                                           (.setPeriodic 300000)
+                                           (.setRequiredNetworkType JobInfo.NETWORK_TYPE_ANY)
+                                           .build)
+                                 job_scheduler (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)]
+                             (println (str "FIXME: schedule() [2] " job_info))
+                             (println (str "FIXME: schedule(" job_info ") -> " (.schedule job_scheduler job_info)))))))
 
        JavascriptInterface
-       (open_settings [_]
+       (stop_job [_]
          (.runOnUiThread activity
                          (fn []
-                          ;;  (let [i (Intent. "android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS")]
-                          ;;    (.startActivityForResult activity i 0))
-                           (let [nm (as (.getSystemService activity "notification") NotificationManager)
-                                 channel_id "def_id"
-                                 ch (NotificationChannel. channel_id "def_title" 3)]
-                             (.createNotificationChannel nm ch)
-
-                             (.notify nm 1
-                                      (->
-                                       (Notification.Builder. activity channel_id)
-                                       (.setSmallIcon android.R.drawable.ic_dialog_info)
-                                       (.setContentTitle "Foo")
-                                       (.setContentText "Text")
-                                       .build))))))
+                           (.cancel
+                            (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
+                            123))))
 
        JavascriptInterface
-       (play_alarm [_]
-         (.runOnUiThread activity (fn [] (play_alarm))))
+       (get_job_info [_ ^String callback]
+         (.runOnUiThread activity
+                         (fn []
+                           (let [service (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
+                                 m (android.app.job.JobInfo/getMinPeriodMillis)
+                                 reason (.getPendingJob service 123)]
+                             (.evaluateJavascript webView (str callback "('" m " / " reason "')") null)))))
+
+      ;;  JavascriptInterface
+      ;;  (open_settings [_]
+      ;;    (.runOnUiThread activity
+      ;;                    (fn []
+      ;;                      (let [nm (as (.getSystemService activity "notification") NotificationManager)
+      ;;                            channel_id "def_id"
+      ;;                            ch (NotificationChannel. channel_id "def_title" 3)]
+      ;;                        (.createNotificationChannel nm ch)
+
+      ;;                        (.notify nm 1
+      ;;                                 (->
+      ;;                                  (Notification.Builder. activity channel_id)
+      ;;                                  (.setSmallIcon android.R.drawable.ic_dialog_info)
+      ;;                                  (.setContentTitle "Foo")
+      ;;                                  (.setContentText "Text")
+      ;;                                  .build))))))
+
+      ;;  JavascriptInterface
+      ;;  (play_alarm [_]
+      ;;    (.runOnUiThread activity (fn [] (play_alarm))))
 
        JavascriptInterface
        (register_broadcast [_ ^String topic ^String action]
