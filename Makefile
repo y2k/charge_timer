@@ -8,10 +8,13 @@ build_resources:
 	clj2js prelude > .build/temp/node/prelude.js
 	clj2js src/main.clj > .build/temp/node/main.js
 	clj2js src/main.resources.clj > .build/temp/node/main.resources.js
-	clj2js src/main.resources.manifest.clj > .build/temp/node/main.resources.manifest.js
+	# clj2js src/main.resources.manifest.clj > .build/temp/node/main.resources.manifest.js
 	echo '{"type":"module"}' > .build/temp/node/package.json
-	node .build/temp/node/main.resources.js > .build/android/app/src/main/assets/index.html
-	node .build/temp/node/main.resources.manifest.js > .build/android/app/src/main/AndroidManifest.xml
+	node .build/temp/node/main.resources.js html > .build/android/app/src/main/assets/index.html
+	node .build/temp/node/main.resources.js manifest > .build/android/app/src/main/AndroidManifest.xml
+
+build_interpreter:
+	clj2js kt src/interpreter/interpreter.clj > .build/temp/node/interpreter.kt
 
 build_kotlin:
 	clj2js kt src/main.android.clj > .build/android/app/src/main/java/im/y2k/chargetimer/GeneratedMain.kt

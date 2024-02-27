@@ -33,7 +33,6 @@
 
   (set! (.-update_status window)
         (fn [message]
-          (println "FIXME:" message)
           (set!
            (.-innerHTML (.querySelector document "#text_job_status"))
            message)))
