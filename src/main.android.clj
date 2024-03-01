@@ -13,10 +13,8 @@
            [onStopJob [JobParameters] Boolean]])
 
 (defn _onStartJob [^ChargeJobService context ^JobParameters _]
-  (println "FIXME: onStartJob 1")
   (let [result (checkNotNull (.registerReceiver context null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
         level (.getIntExtra result "level" -1)]
-    (println (str "FIXME: onStartJob 2: " level))
     (if (> level 90)
       (play_alarm context)
       null))
