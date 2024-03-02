@@ -14,10 +14,12 @@ build_resources:
 	node .build/temp/node/main.resources.js manifest > .build/android/app/src/main/AndroidManifest.xml
 
 build_interpreter:
-	clj2js kt src/interpreter/interpreter.clj > .build/temp/node/interpreter.kt
+	@ # clj2js kt src/interpreter/interpreter.clj > .build/temp/node/interpreter.kt
+	@ clj2js json src/interpreter/sample.clj > .build/android/app/src/main/assets/sample.json
+	@ clj2js kt src/interpreter/interpreter.clj > .build/android/app/src/main/java/im/y2k/chargetimer/interpreter.kt
 
-build_kotlin:
-	clj2js kt src/main.android.clj > .build/android/app/src/main/java/im/y2k/chargetimer/GeneratedMain.kt
+build_kotlin: build_interpreter
+	@ clj2js kt src/main.android.clj > .build/android/app/src/main/java/im/y2k/chargetimer/GeneratedMain.kt
 
 build_web:
 	clj2js prelude > .build/android/app/src/main/assets/js/prelude.js

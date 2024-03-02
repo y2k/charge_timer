@@ -12,7 +12,7 @@
  :methods [[onStartJob [JobParameters] Boolean]
            [onStopJob [JobParameters] Boolean]])
 
-(defn _onStartJob [^ChargeJobService context ^JobParameters _]
+(defn _onStartJob [^ChargeJobService context ^JobParameters p]
   (let [result (checkNotNull (.registerReceiver context null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
         level (.getIntExtra result "level" -1)]
     (if (> level 90)
@@ -20,7 +20,7 @@
       null))
   false)
 
-(defn _onStopJob [^ChargeJobService _ ^JobParameters _]
+(defn _onStopJob [^ChargeJobService s ^JobParameters p]
   false)
 
 (defn play_alarm [^Context context]

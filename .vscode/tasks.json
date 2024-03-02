@@ -10,6 +10,16 @@
                 "reveal": "silent",
                 "clear": true,
             }
+        },
+        {
+            "label": "make kt",
+            "type": "shell",
+            "command": "make build_kotlin",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "silent",
+                "clear": true,
+            }
         }
     ]
 }
