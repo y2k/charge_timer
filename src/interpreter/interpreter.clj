@@ -26,12 +26,12 @@
                        (if (= 0 xs.size)
                          env
                          (let [[kn vn] xs
-                               k (str (inter env kn))
+                               k (str kn)
                                v (inter env vn)]
                            (loop
                             (__unsafe_inject_code "env.copy(bindings = env.bindings.plus(k to v))")
                              (.drop xs 2)))))
-                     (let [env (as (loop env binding.args) Env)
+                     (let [env (as (loop env (as binding "List<Sexp>")) Env)
                            body (.drop node.args 1)]
                        (defn ^Any? loop [^"List<Sexp>" xs]
                          (if (= 1 xs.size)
@@ -64,4 +64,5 @@
     (let [value node.value]
       (cond
         (.startsWith value "\"") (.substring value 1 (- value.length 1))
+        (not= null (.toIntOrNull value)) (.toInt value)
         :else (getm env.bindings node.value)))))
