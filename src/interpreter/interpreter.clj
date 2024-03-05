@@ -1,4 +1,7 @@
-(__unsafe_inject_code "package prelude")
+;; (__unsafe_inject_code "package prelude")
+
+(ns prelude)
+
 (__unsafe_inject_code "fun plus(a: Any?, b: Any?) = (a as Int) + (b as Int)")
 (__unsafe_inject_code "fun minus(a: Any?, b: Any?) = (a as Int) - (b as Int)")
 (__unsafe_inject_code "fun getm(x: Any?, y: String): Any? = if (x is Map<*, *>) x.get(y) else error(\"require Map\")")
@@ -50,17 +53,20 @@
             "if" (let [[cond then_ else_] node.args]
                    (if (= true (inter env cond)) (inter env then_) (inter env else_)))
 
-            (cond
-              (.startsWith node.value ".")
-              (let [a (-> (as node "List<Any>") (.drop 2) (.map (fn [x] (inter env x))))
-                    i (as (inter env (as (get node 1) Any)) Any)
-                    m (.substring node.value 1)]
-                (-> i.javaClass.methods
-                    (.first (fn [x] (= x.name m)))
-                    (.invoke i (spread (.toTypedArray a)))))
+            "." (let [[source method] node.args]
+                  (let [args (-> node.args (.drop 2) (.map (fn [x] (inter env x))))
+                        i (inter env source)
+                        cls (if (not= null i)
+                              i.javaClass
+                              (Class/forName (as source String)))]
+                    (-> cls.methods
+                        (.first (fn [x] (and
+                                         (or (not= i null) (java.lang.reflect.Modifier/isStatic (.getModifiers x)))
+                                         (= x.name method))))
+                        (.invoke i (spread (.toTypedArray args))))))
 
-              :else (let [f (as (.getOrElse env.bindings node.value (fn [] (error node.value))) "(Any?) -> Any?")]
-                      (f (.map node.args (fn [x] (inter env x)))))))
+            (let [f (as (.getOrElse env.bindings node.value (fn [] (error node.value))) "(Any?) -> Any?")]
+              (f (.map node.args (fn [x] (inter env x))))))
     (let [value node.value]
       (cond
         (.startsWith value "\"") (.substring value 1 (- value.length 1))
