@@ -14,7 +14,7 @@
         {
             "label": "make kt",
             "type": "shell",
-            "command": "make build_kotlin",
+            "command": "make build_kotlin build_web",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "silent",
