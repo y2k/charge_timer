@@ -14,6 +14,9 @@
      [:button {:id "btn_stop"} "Stop"]]
     [:script {:type :module} "import { main } from './js/main.js'; main()"]]])
 
+(defn- dispatch [event payload]
+  (.wv_dispatch Android event (JSON/stringify payload)))
+
 (defn main []
   (set! (.-charge_changed window)
         (fn [message]
@@ -29,7 +32,7 @@
   (.addEventListener
    (.querySelector document "#btn_get_info") "click"
    (fn []
-     (.get_job_info Android :update_status)))
+     (dispatch :update_status {})))
 
   (set! (.-update_status window)
         (fn [message]
@@ -42,12 +45,13 @@
   (.addEventListener
    (.querySelector document "#btn_start") "click"
    (fn []
-     (.start_job Android)
+     (dispatch :start_job {})
      (set! (.-innerHTML (.querySelector document "#text_job_status")) "Started")))
 
   (.addEventListener
    (.querySelector document "#btn_stop") "click"
    (fn []
-     (.stop_job Android)))
+     (dispatch :stop_job {})))
 
-  (.register_broadcast Android :charge_changed "android.intent.action.BATTERY_CHANGED"))
+  ;; (.register_broadcast Android :charge_changed "android.intent.action.BATTERY_CHANGED")
+  )

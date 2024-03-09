@@ -8,19 +8,20 @@
 (gen-class
  :name ChargeJobService
  :extends android.app.job.JobService
- :prefix "_"
- :methods [[onStartJob [JobParameters] Boolean]
-           [onStopJob [JobParameters] Boolean]])
+ :constructors {[] []}
+ :prefix "cj_"
+ :methods [[^Override onStartJob [JobParameters] Boolean]
+           [^Override onStopJob [JobParameters] Boolean]])
 
-(defn _onStartJob [^ChargeJobService context ^JobParameters p]
-  (let [result (checkNotNull (.registerReceiver context null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
+(defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
+  (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
         level (.getIntExtra result "level" -1)]
     (if (> level 90)
-      (play_alarm context)
+      (play_alarm self)
       null))
   false)
 
-(defn _onStopJob [^ChargeJobService s ^JobParameters p]
+(defn cj_onStopJob [^ChargeJobService self ^JobParameters p]
   false)
 
 (defn play_alarm [^Context context]
@@ -67,69 +68,48 @@
 
       null)))
 
-(defn main [^Activity activity ^WebView webView]
-  (let [webSettings (.getSettings webView)]
+(gen-class
+ :name WebViewJsListener
+ :extends Any
+ :constructors {[Activity WebView] []}
+ :prefix "wv_"
+ :methods [[^JavascriptInterface dispatch [String String] Unit]])
+
+(defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
+  (let [[a b] self.state]
+    ((make_dispatch (as a Activity) (as b WebView)) event payload))
+  Unit)
+
+(defn main [^Activity activity ^WebView webview]
+  (let [dispatch (make_dispatch activity webview)
+        webSettings (.getSettings webview)]
     (.setJavaScriptEnabled webSettings true)
     (.setAllowUniversalAccessFromFileURLs webSettings true)
     (.addJavascriptInterface
-     webView
-     (proxy [] []
-
-       JavascriptInterface
-       (dispatch [_ ^String event ^Any payload]
-         (.runOnUiThread activity (fn [] (dispatch event payload))))
-
-       JavascriptInterface
-       (start_job [_]
-         (.runOnUiThread activity
-                         (fn []
-                           (let [job_info (->
-                                           (JobInfo.Builder. 123 (ComponentName. activity "im.y2k.chargetimer.ChargeJobService"))
-                                           (.setPeriodic 300000)
-                                           (.setRequiresCharging true)
-                                           .build)
-                                 job_scheduler (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)]
-                             (.schedule job_scheduler job_info)))))
-
-       JavascriptInterface
-       (stop_job [_]
-         (.runOnUiThread activity
-                         (fn []
-                           (.cancel
-                            (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
-                            123))))
-
-       JavascriptInterface
-       (get_job_info [_ ^String callback]
-         (.runOnUiThread activity
-                         (fn []
-                           (let [service (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
-                                 m (android.app.job.JobInfo/getMinPeriodMillis)
-                                 reason (.getPendingJob service 123)]
-                             (.evaluateJavascript webView (str callback "('" m " / " reason "')") null)))))
-
-       JavascriptInterface
-       (register_broadcast [_ ^String topic ^String action]
-         (.runOnUiThread activity
-                         (fn []
-                           (do_register_receiver
-                            activity action
-                            (fn [^String json]
-                              (.evaluateJavascript webView (str topic "('" json "')") null)))))))
+     webview
+     (WebViewJsListener. activity webview)
      "Android")
-    (.loadUrl webView "file:///android_asset/index.html")))
+    (.loadUrl webview "file:///android_asset/index.html")))
+
+(gen-class
+ :name BatteryBroadcastReceiver
+ :extends BroadcastReceiver
+ :constructors {["(String)->Unit"] []}
+ :prefix "br_"
+ :methods [[^Override onReceive [Context Intent] Unit]])
+
+(defn- br_onReceive [^BatteryBroadcastReceiver self ^Context context ^Intent intent]
+  (let [extras (requireNotNull intent.extras)
+        callback (as (get self.state 0) "(String)->Unit")
+        allValues (->
+                   extras
+                   .keySet
+                   (.map (fn [key] (Pair. key (.get extras key))))
+                   (.associate (fn [x] x)))]
+    (callback (.toJson (com.google.gson.Gson.) allValues))))
 
 (defn do_register_receiver [^Context context ^String action ^"(String)->Unit" callback]
   (.registerReceiver
    context
-   (proxy
-    [BroadcastReceiver] []
-     (onReceive [_ ^Context context ^Intent intent]
-       (let [extras (requireNotNull intent.extras)
-             allValues (->
-                        extras
-                        .keySet
-                        (.map (fn [key] (Pair. key (.get extras key))))
-                        (.associate (fn [x] x)))]
-         (callback (.toJson (com.google.gson.Gson.) allValues)))))
+   (BatteryBroadcastReceiver. callback)
    (IntentFilter. action)))

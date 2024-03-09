@@ -1,9 +1,5 @@
 (ns prelude)
 
-(__unsafe_inject_code "fun plus(a: Any?, b: Any?) = (a as Int) + (b as Int)")
-(__unsafe_inject_code "fun minus(a: Any?, b: Any?) = (a as Int) - (b as Int)")
-(__unsafe_inject_code "fun getm(x: Any?, y: String): Any? = if (x is Map<*, *>) x.get(y) else error(\"require Map\")")
-(__unsafe_inject_code "fun <T> geta(x: List<T>, y: Int): T = x[y]")
 (__unsafe_inject_code "data class Env(val bindings: Map<String, Any?>)")
 
 (defn ^Any? inter [^Env env ^Any? node]
@@ -66,4 +62,4 @@
       (cond
         (.startsWith value "\"") (.substring value 1 (- value.length 1))
         (not= null (.toIntOrNull value)) (.toInt value)
-        :else (getm env.bindings value)))))
+        :else (__prelude_getm env.bindings value)))))
