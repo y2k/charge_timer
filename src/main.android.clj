@@ -68,8 +68,9 @@
  :methods [[^JavascriptInterface dispatch [String String] Unit]])
 
 (defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
-  (let [activity (as (get self.state 0) Activity)]
-    (.runOnUiThread activity (fn [] (run_code activity event)))))
+  (let [activity (as (get self.state 0) Activity)
+        wv (get self.state 1)]
+    (.runOnUiThread activity (fn [] (run_code activity wv event)))))
 
 ;; ((make_dispatch (as a Activity) (as b WebView)) event payload)
 

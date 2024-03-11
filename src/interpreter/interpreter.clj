@@ -4,12 +4,12 @@
 
 (__unsafe_inject_code "data class Env(val bindings: Map<String, Any?> = emptyMap())")
 
-(defn run_code [^Context context ^String event]
+(defn run_code [^Context context webview ^String event]
   (let [json (.reader (.open context.assets "sample.json"))
         code (.fromJson (Gson.) json (class List))
         event_handlers (as (inter (Env.) code) "List<List<Any>>")
         handler (as (get (.first event_handlers (fn [[name]] (= name event))) 1) "(Any?)->Unit")]
-    (handler [context])))
+    (handler [{:context context :webview webview}])))
 
 (defn ^Any? inter [^Env env ^Any? node]
   (if (is node List<*>)
@@ -22,6 +22,9 @@
                     (.toMap))
 
         "vector" (.map args (fn [x] (inter env x)))
+
+        "get" (let [[target i] args]
+                (__prelude_getm (inter env target) (as (inter env i) String)))
 
         "let*" (let [[binding] args]
                  (defn ^Any? loop [^Env env ^"List<Any>" xs]
@@ -52,6 +55,15 @@
         "if" (let [[cond then_ else_] args]
                (if (= true (inter env cond)) (inter env then_) (inter env else_)))
 
+        "new" (let [[source] args]
+                (let [args (-> args (.drop 1) (.map (fn [x] (inter env x))))
+                      cls (Class/forName (.replace (as source String) "_" ""))
+                      index (.count source (fn [x] (= x (get "_" 0))))]
+                  (-> cls.constructors
+                      (.filter (fn [x] (= x.parameterCount args.size)))
+                      (get index)
+                      (.newInstance (spread (.toTypedArray args))))))
+
         "." (let [[source method] args]
               (let [args (-> args (.drop 2) (.map (fn [x] (inter env x))))
                     i (inter env source)
@@ -69,6 +81,6 @@
 
     (let [value (as node String)]
       (cond
-        (.startsWith value "\"") (.substring value 1 (- value.length 1))
+        (.startsWith value "\"") (.replace (.substring value 1 (- value.length 1)) "\\\"" "\"")
         (not= null (.toIntOrNull value)) (.toInt value)
         :else (__prelude_getm env.bindings value)))))
