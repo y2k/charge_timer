@@ -1,6 +1,15 @@
-(ns prelude)
+(ns im.y2k.chargetimer
+  (:import [android.content Context]
+           [com.google.gson Gson]))
 
-(__unsafe_inject_code "data class Env(val bindings: Map<String, Any?>)")
+(__unsafe_inject_code "data class Env(val bindings: Map<String, Any?> = emptyMap())")
+
+(defn run_code [^Context context ^String event]
+  (let [json (.reader (.open context.assets "sample.json"))
+        code (.fromJson (Gson.) json (class List))
+        event_handlers (as (inter (Env.) code) "List<List<Any>>")
+        handler (as (get (.first event_handlers (fn [[name]] (= name event))) 1) "(Any?)->Unit")]
+    (handler [context])))
 
 (defn ^Any? inter [^Env env ^Any? node]
   (if (is node List<*>)

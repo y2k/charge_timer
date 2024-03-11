@@ -6,4 +6,11 @@
       (.setStreamVolume am sound_stream_id max 0)
       (let [notification (.getDefaultUri android.media.RingtoneManager 4)
             r (.getRingtone android.media.RingtoneManager context notification)]
-        (.play r))))]]
+        (.play r))))]
+ [:job_scheduled
+  (fn [_]
+    (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
+          level (.getIntExtra result "level" -1)]
+      (if (> level 90)
+        (play_alarm self)
+        null)))]]

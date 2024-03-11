@@ -5,68 +5,60 @@
            [android.media AudioManager RingtoneManager]
            [android.app.job JobScheduler JobParameters JobInfo]))
 
-(gen-class
- :name ChargeJobService
- :extends android.app.job.JobService
- :constructors {[] []}
- :prefix "cj_"
- :methods [[^Override onStartJob [JobParameters] Boolean]
-           [^Override onStopJob [JobParameters] Boolean]])
+;; (gen-class
+;;  :name ChargeJobService
+;;  :extends android.app.job.JobService
+;;  :constructors {[] []}
+;;  :prefix "cj_"
+;;  :methods [[^Override onStartJob [JobParameters] Boolean]
+;;            [^Override onStopJob [JobParameters] Boolean]])
 
-(defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
-  (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
-        level (.getIntExtra result "level" -1)]
-    (if (> level 90)
-      (play_alarm self)
-      null))
-  false)
+;; (defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
+;;   ;; (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
+;;   ;;       level (.getIntExtra result "level" -1)]
+;;   ;;   (if (> level 90)
+;;   ;;     (play_alarm self)
+;;   ;;     null))
+;;   false)
 
-(defn cj_onStopJob [^ChargeJobService self ^JobParameters p]
-  false)
+;; (defn cj_onStopJob [^ChargeJobService self ^JobParameters p]
+;;   false)
 
-(defn play_alarm [^Context context]
-  (let [am (as (.getSystemService context Context/AUDIO_SERVICE) AudioManager)
-        sound_stream_id 5
-        max (.getStreamMaxVolume am sound_stream_id)]
-    (.setStreamVolume am sound_stream_id max 0)
-    (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
-          r (.getRingtone RingtoneManager context notification)]
-      (.play r))))
+;; (defn play_alarm [^Context context]
+;;   (let [am (as (.getSystemService context Context/AUDIO_SERVICE) AudioManager)
+;;         sound_stream_id 5
+;;         max (.getStreamMaxVolume am sound_stream_id)]
+;;     (.setStreamVolume am sound_stream_id max 0)
+;;     (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
+;;           r (.getRingtone RingtoneManager context notification)]
+;;       (.play r))))
 
-(defn- make_dispatch [^Activity activity ^WebView webView]
-  (fn [^String event ^Any payload]
-    (case event
+;; (defn- make_dispatch [^Activity activity ^WebView webView]
+;;   (fn [^String event ^Any payload]
+;;     (case event
 
-      :start_job
-      (let [job_info (->
-                      (JobInfo.Builder. 123 (ComponentName. activity "im.y2k.chargetimer.ChargeJobService"))
-                      (.setPeriodic 300000)
-                      (.setRequiresCharging true)
-                      .build)
-            job_scheduler (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)]
-        (.schedule job_scheduler job_info))
+;;       :start_job
+;;       (let [job_info (->
+;;                       (JobInfo.Builder. 123 (ComponentName. activity "im.y2k.chargetimer.ChargeJobService"))
+;;                       (.setPeriodic 300000)
+;;                       (.setRequiresCharging true)
+;;                       .build)
+;;             job_scheduler (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)]
+;;         (.schedule job_scheduler job_info))
 
-      :stop_job
-      (.cancel
-       (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
-       123)
+;;       :stop_job
+;;       (.cancel
+;;        (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
+;;        123)
 
-      :get_job_info
-      (let [callback (FIXME)
-            service (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
-            m (android.app.job.JobInfo/getMinPeriodMillis)
-            reason (.getPendingJob service 123)]
-        (.evaluateJavascript webView (str callback "('" m " / " reason "')") null))
+;;       :get_job_info
+;;       (let [callback (FIXME)
+;;             service (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
+;;             m (android.app.job.JobInfo/getMinPeriodMillis)
+;;             reason (.getPendingJob service 123)]
+;;         (.evaluateJavascript webView (str callback "('" m " / " reason "')") null))
 
-      :register_broadcast
-      (let [action (FIXME)
-            topic (FIXME)]
-        (do_register_receiver
-         activity action
-         (fn [^String json]
-           (.evaluateJavascript webView (str topic "('" json "')") null))))
-
-      null)))
+;;       null)))
 
 (gen-class
  :name WebViewJsListener
@@ -76,40 +68,37 @@
  :methods [[^JavascriptInterface dispatch [String String] Unit]])
 
 (defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
-  (let [[a b] self.state]
-    ((make_dispatch (as a Activity) (as b WebView)) event payload))
-  Unit)
+  (let [activity (as (get self.state 0) Activity)]
+    (.runOnUiThread activity (fn [] (run_code activity event)))))
+
+;; ((make_dispatch (as a Activity) (as b WebView)) event payload)
 
 (defn main [^Activity activity ^WebView webview]
-  (let [dispatch (make_dispatch activity webview)
-        webSettings (.getSettings webview)]
+  (let [webSettings (.getSettings webview)]
     (.setJavaScriptEnabled webSettings true)
     (.setAllowUniversalAccessFromFileURLs webSettings true)
-    (.addJavascriptInterface
-     webview
-     (WebViewJsListener. activity webview)
-     "Android")
+    (.addJavascriptInterface webview (WebViewJsListener. activity webview) "Android")
     (.loadUrl webview "file:///android_asset/index.html")))
 
-(gen-class
- :name BatteryBroadcastReceiver
- :extends BroadcastReceiver
- :constructors {["(String)->Unit"] []}
- :prefix "br_"
- :methods [[^Override onReceive [Context Intent] Unit]])
+;; (gen-class
+;;  :name BatteryBroadcastReceiver
+;;  :extends BroadcastReceiver
+;;  :constructors {["(String)->Unit"] []}
+;;  :prefix "br_"
+;;  :methods [[^Override onReceive [Context Intent] Unit]])
 
-(defn- br_onReceive [^BatteryBroadcastReceiver self ^Context context ^Intent intent]
-  (let [extras (requireNotNull intent.extras)
-        callback (as (get self.state 0) "(String)->Unit")
-        allValues (->
-                   extras
-                   .keySet
-                   (.map (fn [key] (Pair. key (.get extras key))))
-                   (.associate (fn [x] x)))]
-    (callback (.toJson (com.google.gson.Gson.) allValues))))
+;; (defn- br_onReceive [^BatteryBroadcastReceiver self ^Context context ^Intent intent]
+;;   (let [extras (requireNotNull intent.extras)
+;;         callback (as (get self.state 0) "(String)->Unit")
+;;         allValues (->
+;;                    extras
+;;                    .keySet
+;;                    (.map (fn [key] (Pair. key (.get extras key))))
+;;                    (.associate (fn [x] x)))]
+;;     (callback (.toJson (com.google.gson.Gson.) allValues))))
 
-(defn do_register_receiver [^Context context ^String action ^"(String)->Unit" callback]
-  (.registerReceiver
-   context
-   (BatteryBroadcastReceiver. callback)
-   (IntentFilter. action)))
+;; (defn do_register_receiver [^Context context ^String action ^"(String)->Unit" callback]
+;;   (.registerReceiver
+;;    context
+;;    (BatteryBroadcastReceiver. callback)
+;;    (IntentFilter. action)))
