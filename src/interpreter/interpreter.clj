@@ -5,7 +5,8 @@
 (__unsafe_inject_code "data class Env(val bindings: Map<String, Any?> = emptyMap())")
 
 (defn run_code [^Context context webview ^String event]
-  (let [json (.reader (.open context.assets "sample.json"))
+  (let [f1 (java.io.File. context.filesDir "sample.json")
+        json (if (.exists f1) (.reader f1) (.reader (.open context.assets "sample.json")))
         code (.fromJson (Gson.) json (class List))
         event_handlers (as (inter (Env.) code) "List<List<Any>>")
         handler (as (get (.first event_handlers (fn [[name]] (= name event))) 1) "(Any?)->Unit")]
@@ -66,14 +67,18 @@
 
         "." (let [[source method] args]
               (let [args (-> args (.drop 2) (.map (fn [x] (inter env x))))
+                    real_method (.replace (as method String) "_" "")
                     i (inter env source)
                     cls (if (not= null i)
                           i.javaClass
-                          (Class/forName (as source String)))]
+                          (Class/forName (as source String)))
+                    index (.count (as method String) (fn [x] (= x (get "_" 0))))]
                 (-> cls.methods
-                    (.first (fn [x] (and
-                                     (or (not= i null) (java.lang.reflect.Modifier/isStatic (.getModifiers x)))
-                                     (= x.name method))))
+                    (.filter (fn [x] (and
+                                      (or (not= i null) (java.lang.reflect.Modifier/isStatic (.getModifiers x)))
+                                      (= x.name real_method))))
+                    (.filter (fn [x] (= x.parameterCount args.size)))
+                    (get index)
                     (.invoke i (spread (.toTypedArray args))))))
 
         (let [f (as (.getOrElse env.bindings (as (get node 0) String) (fn [] (error node))) "(Any?) -> Any?")]
