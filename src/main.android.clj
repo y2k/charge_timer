@@ -5,24 +5,26 @@
            [android.media AudioManager RingtoneManager]
            [android.app.job JobScheduler JobParameters JobInfo]))
 
-;; (gen-class
-;;  :name ChargeJobService
-;;  :extends android.app.job.JobService
-;;  :constructors {[] []}
-;;  :prefix "cj_"
-;;  :methods [[^Override onStartJob [JobParameters] Boolean]
-;;            [^Override onStopJob [JobParameters] Boolean]])
+(gen-class
+ :name ChargeJobService
+ :extends android.app.job.JobService
+ :constructors {[] []}
+ :prefix "cj_"
+ :methods [[^Override onStartJob [JobParameters] Boolean]
+           [^Override onStopJob [JobParameters] Boolean]])
 
-;; (defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
-;;   ;; (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
-;;   ;;       level (.getIntExtra result "level" -1)]
-;;   ;;   (if (> level 90)
-;;   ;;     (play_alarm self)
-;;   ;;     null))
-;;   false)
+(defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
+  ;; (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
+  ;;       level (.getIntExtra result "level" -1)]
+  ;;   (if (> level 90)
+  ;;     (play_alarm self)
+  ;;     null))
 
-;; (defn cj_onStopJob [^ChargeJobService self ^JobParameters p]
-;;   false)
+  (run_code self null :job_scheduled)
+  false)
+
+(defn cj_onStopJob [^ChargeJobService self ^JobParameters p]
+  false)
 
 ;; (defn play_alarm [^Context context]
 ;;   (let [am (as (.getSystemService context Context/AUDIO_SERVICE) AudioManager)
@@ -74,11 +76,11 @@
 
 ;; ((make_dispatch (as a Activity) (as b WebView)) event payload)
 
-(defn main [^Activity activity ^WebView webview]
+(defn main [^Context context ^WebView webview]
   (let [webSettings (.getSettings webview)]
     (.setJavaScriptEnabled webSettings true)
     (.setAllowUniversalAccessFromFileURLs webSettings true)
-    (.addJavascriptInterface webview (WebViewJsListener. activity webview) "Android")
+    (.addJavascriptInterface webview (WebViewJsListener. context webview) "Android")
     (.loadUrl webview "file:///android_asset/index.html")))
 
 ;; (gen-class
