@@ -6,6 +6,25 @@
            [android.app.job JobScheduler JobParameters JobInfo]))
 
 (gen-class
+ :name WebViewJsListener
+ :extends Any
+ :constructors {[Activity WebView] []}
+ :prefix "wv_"
+ :methods [[^JavascriptInterface dispatch [String String] Unit]])
+
+(defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
+  (let [activity (as (get self.state 0) Activity)
+        wv (get self.state 1)]
+    (.runOnUiThread activity (fn [] (run_code activity wv event)))))
+
+(defn main [^Activity context ^WebView webview]
+  (let [webSettings (.getSettings webview)]
+    (.setJavaScriptEnabled webSettings true)
+    (.setAllowUniversalAccessFromFileURLs webSettings true)
+    (.addJavascriptInterface webview (WebViewJsListener. context webview) "Android")
+    (.loadUrl webview "file:///android_asset/index.html")))
+
+(gen-class
  :name ChargeJobService
  :extends android.app.job.JobService
  :constructors {[] []}
@@ -14,12 +33,6 @@
            [^Override onStopJob [JobParameters] Boolean]])
 
 (defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
-  ;; (let [result (checkNotNull (.registerReceiver self null (IntentFilter. "android.intent.action.BATTERY_CHANGED")))
-  ;;       level (.getIntExtra result "level" -1)]
-  ;;   (if (> level 90)
-  ;;     (play_alarm self)
-  ;;     null))
-
   (run_code self null :job_scheduled)
   false)
 
@@ -61,27 +74,6 @@
 ;;         (.evaluateJavascript webView (str callback "('" m " / " reason "')") null))
 
 ;;       null)))
-
-(gen-class
- :name WebViewJsListener
- :extends Any
- :constructors {[Activity WebView] []}
- :prefix "wv_"
- :methods [[^JavascriptInterface dispatch [String String] Unit]])
-
-(defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
-  (let [activity (as (get self.state 0) Activity)
-        wv (get self.state 1)]
-    (.runOnUiThread activity (fn [] (run_code activity wv event)))))
-
-;; ((make_dispatch (as a Activity) (as b WebView)) event payload)
-
-(defn main [^Context context ^WebView webview]
-  (let [webSettings (.getSettings webview)]
-    (.setJavaScriptEnabled webSettings true)
-    (.setAllowUniversalAccessFromFileURLs webSettings true)
-    (.addJavascriptInterface webview (WebViewJsListener. context webview) "Android")
-    (.loadUrl webview "file:///android_asset/index.html")))
 
 ;; (gen-class
 ;;  :name BatteryBroadcastReceiver
