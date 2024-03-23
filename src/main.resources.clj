@@ -3,13 +3,14 @@
 (defn- manifest []
   [:manifest {:xmlns:android "http://schemas.android.com/apk/res/android"}
    [:uses-permission {:android:name "android.permission.INTERNET"}]
+   [:uses-permission {:android:name "android.permission.POST_NOTIFICATIONS"}]
    [:application {:android:icon "@drawable/ic_launcher"
                   :android:label "@string/app_name"
                   :android:roundIcon "@drawable/ic_launcher"
                   :android:theme "@style/Theme.ChargeTimer"}
-    [:service {:android:name ".ChargeJobService"
+    [:service {:android:name ".Main_android$ChargeJobService"
                :android:permission "android.permission.BIND_JOB_SERVICE"}]
-    [:activity {:android:name ".MainActivity"
+    [:activity {:android:name ".Main_android$MainActivity"
                 :android:configChanges "orientation|screenSize"
                 :android:exported "true"
                 :android:theme "@style/Theme.ChargeTimer"}

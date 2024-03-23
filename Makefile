@@ -1,31 +1,55 @@
-run: before_run build_reload
+run: install_apk build_dex_reload
 
-before_run: build_web build_resources build_kotlin
+# ==================================================
+
+build_dex_reload: build_dex
+	@ adb root
+	@ adb shell "rm -f /data/data/im.y2k.chargetimer/files/classes.dex"
+	@ adb push .build/temp/dex/classes.dex /data/data/im.y2k.chargetimer/files/sample.tmp
+	@ adb shell "cp /data/data/im.y2k.chargetimer/files/sample.tmp /data/data/im.y2k.chargetimer/files/classes.dex"
+	@ adb shell "rm -f /data/data/im.y2k.chargetimer/files/sample.tmp"
+
+build_dex:
+	@ rm -rf .build/temp/dex_local
+	@ mkdir -p .build/temp/dex_local/y2k
+	@ cp src/runtime/RT.java .build/temp/dex_local/y2k
+	@ clj2js java src/main.shared.clj > .build/temp/dex_local/Main_shared.java
+	@ rm -rf .build/temp/dex
+	@ mkdir -p .build/temp/dex
+	@ javac -cp ~/Library/Android/sdk/platforms/android-34/android.jar -sourcepath .build/temp/dex_local -d .build/temp/dex .build/temp/dex_local/Main_shared.java
+	@ jar cfv .build/temp/dex/out.jar -C .build/temp/dex .
+	@ ~/Library/Android/sdk/build-tools/34.0.0/d8 --min-api 31 --output .build/temp/dex .build/temp/dex/out.jar
+
+# ==================================================
+
+install_apk: build_web build_resources compile
 	docker run --rm -v ${PWD}/.build/temp/android:/root/.android -v ${PWD}/.build/temp/gradle:/root/.gradle -v ${PWD}/.build/android:/target y2khub/cljdroid build && \
 	adb install -r .build/android/app/build/outputs/apk/debug/app-debug.apk && \
 	adb shell am start -n im.y2k.chargetimer/.MainActivity
 
 build_resources:
-	mkdir .build/temp/node || true
-	clj2js js prelude > .build/temp/node/prelude.js
-	clj2js js src/main.web.clj > .build/temp/node/main.js
-	clj2js js src/main.resources.clj > .build/temp/node/main.resources.js
-	# clj2js js src/main.resources.manifest.clj > .build/temp/node/main.resources.manifest.js
-	echo '{"type":"module"}' > .build/temp/node/package.json
-	node .build/temp/node/main.resources.js html > .build/android/app/src/main/assets/index.html
-	node .build/temp/node/main.resources.js manifest > .build/android/app/src/main/AndroidManifest.xml
+	@ mkdir -p .build/temp/node || true
+	@ clj2js js prelude > .build/temp/node/prelude.js
+	@ clj2js js src/main.shared.clj > .build/temp/node/main-shared.js
+	@ clj2js js src/main.web.clj > .build/temp/node/main.js
+	@ clj2js js src/main.resources.clj > .build/temp/node/main.resources.js
+	@ echo '{"type":"module"}' > .build/temp/node/package.json
+	@ node .build/temp/node/main.resources.js html > .build/android/app/src/main/assets/index.html
+	@ node .build/temp/node/main.resources.js manifest > .build/android/app/src/main/AndroidManifest.xml
 
-build_reload: build_kotlin
-	@ adb push .build/android/app/src/main/assets/sample.json /data/data/im.y2k.chargetimer/files/sample.tmp
-	@ adb shell "cp /data/data/im.y2k.chargetimer/files/sample.tmp /data/data/im.y2k.chargetimer/files/sample.json"
+# build_reload: compile
+# 	@ adb push .build/android/app/src/main/assets/sample.json /data/data/im.y2k.chargetimer/files/sample.tmp
+# 	@ adb shell "cp /data/data/im.y2k.chargetimer/files/sample.tmp /data/data/im.y2k.chargetimer/files/sample.json"
 
-build_kotlin: build_interpreter
-	@ clj2js kt src/main.android.clj > .build/android/app/src/main/java/im/y2k/chargetimer/main.android.kt
+compile:
+	@ cat src/runtime/RT.java > .build/android/app/src/main/java/y2k/RT.java
+	@ clj2js java src/main.android.clj > .build/android/app/src/main/java/im/y2k/chargetimer/Main_android.java
+	@ clj2js java src/main.shared.clj > .build/android/app/src/main/java/im/y2k/chargetimer/Main_shared.java
 
-build_interpreter:
-	@ # clj2js kt src/interpreter/interpreter.clj > .build/temp/node/interpreter.kt
-	@ clj2js json src/main.shared.clj > .build/android/app/src/main/assets/sample.json
-	@ clj2js kt src/interpreter/interpreter.clj > .build/android/app/src/main/java/im/y2k/chargetimer/interpreter.kt
+# build_interpreter:
+# 	@ # clj2js kt src/interpreter/interpreter.clj > .build/temp/node/interpreter.kt
+# 	@ # clj2js json src/main.shared.clj > .build/android/app/src/main/assets/sample.json
+# 	@ # clj2js kt src/interpreter/interpreter.clj > .build/android/app/src/main/java/im/y2k/chargetimer/interpreter.kt
 
 build_web:
 	clj2js js prelude > .build/android/app/src/main/assets/js/prelude.js
@@ -40,4 +64,4 @@ log:
 log_error:
 	clear && adb logcat -T 1 *:W | grep 'im.y2k.chargetimer'
 
-.PHONY: run before_run build_reload build_resources build_web build_kotlin log log_error
+.PHONY: build_dex_reload build_dex run install_apk build_reload build_resources build_web compile log log_error
