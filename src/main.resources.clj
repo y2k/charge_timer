@@ -1,9 +1,19 @@
-(ns resources (:require [main :as m]))
+(ns resources (:require [main-shared :as app]))
+
+(defn- html []
+  [:html {:lang "ru" :data-theme "dark"}
+   [:head
+    [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
+    [:link {:rel "stylesheet" :href "css/pico.classless.css"}]]
+   [:body {:style "user-select: none;" :onload ""}
+    (app/html)
+    [:script {:type :module} "import { main } from './js/main.js'; main()"]]])
 
 (defn- manifest []
   [:manifest {:xmlns:android "http://schemas.android.com/apk/res/android"}
-   [:uses-permission {:android:name "android.permission.INTERNET"}]
-   [:uses-permission {:android:name "android.permission.POST_NOTIFICATIONS"}]
+  ;;  [:uses-permission {:android:name "android.permission.INTERNET"}]
+  ;;  [:uses-permission {:android:name "android.permission.POST_NOTIFICATIONS"}]
+   [:uses-permission {:android:name "android.permission.ACCESS_NOTIFICATION_POLICY"}]
    [:application {:android:icon "@drawable/ic_launcher"
                   :android:label "@string/app_name"
                   :android:roundIcon "@drawable/ic_launcher"
@@ -36,6 +46,6 @@
            "</" tag ">"))))
 
 (case (get process.argv 2)
-  :html (println (html_to_string (m/html)))
+  :html (println (html_to_string (html)))
   :manifest (println (html_to_string (manifest)))
   null)

@@ -45,13 +45,12 @@
   ;;    (.getMethod "dispatch" (class Object) (class Object) (class Object))
   ;;    (.invoke null env event payload)
   ;;    checked!))
-  )
+     )
 
 (defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
   (let [[^Activity activity ^WebView wv] self.state]
     (.runOnUiThread!
-     activity (fn! []
-                   (dispatch {:context (.getContext wv) :webview wv} event payload)))))
+     activity (fn! [] (dispatch {:context (.getContext wv) :webview wv} event payload)))))
 
 (gen-class
  :name ChargeJobService
@@ -67,64 +66,3 @@
 
 (defn cj_onStopJob [^ChargeJobService self ^JobParameters p]
   false)
-
-;; (defn play_alarm [^Context context]
-;;   (let [am (as (.getSystemService context Context/AUDIO_SERVICE) AudioManager)
-;;         sound_stream_id 5
-;;         max (.getStreamMaxVolume am sound_stream_id)]
-;;     (.setStreamVolume am sound_stream_id max 0)
-;;     (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
-;;           r (.getRingtone RingtoneManager context notification)]
-;;       (.play! r))))
-
-;; (defn ^"BiFunction<String,Object,Object>" make_dispatch [^Activity activity ^WebView webView]
-;;   (fn [^String event ^Object payload]
-;;     (case event
-
-;;       :start_job
-;;       (let [job_info (->
-;;                       (JobInfo.Builder. 123 (ComponentName. activity "im.y2k.chargetimer.ChargeJobService"))
-;;                       (.setPeriodic 300000)
-;;                       (.setRequiresCharging true)
-;;                       .build)
-;;             job_scheduler (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)]
-;;         (.schedule job_scheduler job_info))
-
-;;       :stop_job
-;;       (.cancel!
-;;        (.getSystemService activity (class JobScheduler))
-;;        123)
-
-;;       :get_job_info
-;;       (let [callback "(FIXME)"
-;;             service (as (.getSystemService activity Context.JOB_SCHEDULER_SERVICE) JobScheduler)
-;;             m (android.app.job.JobInfo/getMinPeriodMillis)
-;;             reason (.getPendingJob service 123)]
-;;         (.evaluateJavascript! webView (str callback "('" m " / " reason "')") null))
-
-;;       null)))
-
-;; (gen-class
-;;  :name BatteryBroadcastReceiver
-;;  :extends BroadcastReceiver
-;;  :constructors {["Consumer<String>"] []}
-;;  :prefix "br_"
-;;  :methods [[^Override onReceive [Context Intent] void]])
-
-;; (defn- br_onReceive [^BatteryBroadcastReceiver self ^Context context ^Intent intent]
-;;   (let [extras (.getExtras intent)
-;;         ^"Consumer<String>" callback (get self.state 0)
-;;         allValues (->
-;;                    extras
-;;                    .keySet
-;;                    .stream
-;;                    (.collect (Collectors.toMap
-;;                               (fn [key] key)
-;;                               (fn [key] (.get extras key)))))]
-;;     (.accept! callback (.toJson (com.google.gson.Gson.) allValues))))
-
-;; (defn do_register_receiver [^Context context ^String action ^"Consumer<String>" callback]
-;;   (.registerReceiver
-;;    context
-;;    (BatteryBroadcastReceiver. callback)
-;;    (IntentFilter. action)))

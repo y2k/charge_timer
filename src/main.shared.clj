@@ -1,80 +1,90 @@
 (jvm! (ns im.y2k.chargetimer
         (:import [android.webkit WebView]
                  [android.app Activity NotificationChannel Notification NotificationManager]
-                 [android.content Intent IntentFilter Context]
+                 [android.content Intent IntentFilter Context ComponentName]
                  [android.media AudioManager RingtoneManager]
+                 [android.app.job JobScheduler JobParameters JobInfo]
                  [java.util Objects])))
 
 (js!
  (defn html []
+   (defn- button [title event]
+     [:button {:onclick (str "Android.dispatch(\"" event "\", {})")} title])
    [:main
     [:h3 {:id "text_charge"} "..."]
     [:h3 {:id "text_job_status"} "..."]
-    [:button {:id "btn_get_info"} "Get info"]
-    [:button {:id "btn_start"} "Start"]
-    [:button {:id "btn_stop"} "Stop"]
-    [:button {:id "show_notification" :onclick "Android.dispatch(\"show_notification\", {})"} "Show test notification"]]))
+    (button "Get info" "get_info_pressed")
+    (button "Start" "start_pressed")
+    (button "Stop" "stop_pressed")
+    (button "Show test notification" "show_notification")
+    (button "Play alarm" "play_alarm_pressed")]))
 
 (jvm!
+ (defn- start_job [env]
+   (let [^Context activity (:context env)
+         job_info (->
+                   (JobInfo.Builder. 123 (ComponentName. activity "im.y2k.chargetimer.Main_android$ChargeJobService"))
+                   (.setPeriodic 300000)
+                   (.setRequiresCharging true)
+                   .build)
+         job_scheduler (.getSystemService activity (class JobScheduler))]
+     (.schedule job_scheduler job_info)
+     (get_status env)))
+
+ (defn- stop_job [env]
+   (let [^Context activity (:context env)]
+     (.cancel
+      (.getSystemService activity (class JobScheduler))
+      123)
+     (get_status env)))
+
+ (defn- get_status [env]
+   (let [^Context ctx (:context env)
+         ^WebView wv (:webview env)
+         level (.getIntExtra (.registerReceiver ctx null (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)
+         m (/ (android.app.job.JobInfo/getMinPeriodMillis) 1000)
+         reason (.getPendingJob (.getSystemService ctx (class JobScheduler)) 123)]
+     (.evaluateJavascript! wv (str "window.update_ui(\"#text_job_status\", \"" level "% | " m " sec | " reason "\")") null)))
+
  (defn- show_notification [env]
    (let [^Context context (:context env)
          nm (.getSystemService context (class NotificationManager))
-         channelId "my_channel_id"
-         channelName "My Channel"
-         ch (NotificationChannel. channelId channelName NotificationManager/IMPORTANCE_DEFAULT)
+         channelId "test_channel"
+         ch (NotificationChannel. channelId channelId NotificationManager/IMPORTANCE_DEFAULT)
          n (->
             (Notification.Builder. context channelId)
-            (.setSmallIcon R.drawable.ic_launcher)
-            (.setContentTitle "Простое уведомление")
-            (.setContentText "Это текст уведомления")
+            (.setSmallIcon android.R.drawable.ic_dialog_info)
+            (.setContentTitle "Test")
+            (.setContentText "Test")
             .build)]
      (.createNotificationChannel nm ch)
      (.notify! nm 1 n)))
 
+ (defn- play_alarm_pressed [env]
+   (play_alarm (:context env)))
+
+ (defn- play_alarm [^Context context]
+   (let [am (as (.getSystemService context Context/AUDIO_SERVICE) AudioManager)
+         sound_stream_id 5
+         max (.getStreamMaxVolume am sound_stream_id)]
+     (.setStreamVolume am sound_stream_id max 0)
+     (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
+           r (.getRingtone RingtoneManager context notification)]
+       (.play! r))))
+
+ (defn- job_scheduled [env]
+   (let [^Context ctx (:context env)
+         level (.getIntExtra (.registerReceiver ctx null (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)]
+     (if (> level 90)
+       (play_alarm ctx)
+       null)))
+
  (defn dispatch [env event payload]
    (case event
      :show_notification (show_notification env)
-     (println "[LOG] " event))))
-
-;;  (defn show_battery_level [^WebView wv]
-;;    (let [context (.getContext wv)
-;;          r (.registerReceiver context null (IntentFilter. Intent/ACTION_BATTERY_CHANGED))
-;;          level (.getIntExtra r "level" -1)]
-;;      (.evaluateJavascript! wv (str "window.update_ui(\"#text_job_status\", " level ")") null)))
-
-;;  (defn play_alarm [^Context context]
-;;    (let [am (as (.getSystemService context Context/AUDIO_SERVICE) AudioManager)
-;;          sound_stream_id 5
-;;          max (.getStreamMaxVolume am sound_stream_id)]
-;;      (.setStreamVolume am sound_stream_id max 0)
-;;      (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
-;;            r (.getRingtone RingtoneManager context notification)]
-;;        (.play! r))))
-
-;;  (defn handle_ui_event [env]
-;;    (let [^WebView wv (:webview env)]
-;;      (println "FIXME: " event " / " payload)
-;;     ;; (show_battery_level wv)
-;;      (play_alarm (.getContext wv))))
-
-;;  (defn handle_job_started [env]
-;;    (FIXME))
-
-;;  (defn dispatch [env event payload]
-;;    (case event
-;;      :job_started (handle_job_started env)
-;;      (handle_ui_event)))
-
-;; (defn start_job [env]
-;;   (let [wv (:webview env)
-;;         context (:context env)
-;;         r (.registerReceiver context null (android.content.IntentFilter_. "android.intent.action.BATTERY_CHANGED"))
-;;         level (.getIntExtra r "level" -1)]
-;;     (.evaluateJavascript wv (str "window.update_ui(\"#text_job_status\", " (.toString level) ")") null)))
-
-;; (defn job_scheduled [_]
-;;   (let [result (checkNotNull (.registerReceiver self null (android.content.IntentFilter_. "android.intent.action.BATTERY_CHANGED")))
-;;         level (.getIntExtra result "level" -1)]
-;;     (if (> level 90)
-;;       (play_alarm self)
-;;       null)))
+     :get_info_pressed (get_status env)
+     :start_pressed (start_job env)
+     :stop_pressed (stop_job env)
+     :play_alarm_pressed (play_alarm_pressed env)
+     :job_started (job_scheduled env)
+     (println "[ERROR] unknown event: " event))))
