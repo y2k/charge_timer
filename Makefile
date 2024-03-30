@@ -18,8 +18,8 @@ build_dex_reload: build_dex
 build_dex:
 	@ rm -rf .build/temp/dex_local
 	@ mkdir -p .build/temp/dex_local/y2k
-	@ cp src/runtime/RT.java .build/temp/dex_local/y2k
-	@ clj2js java src/main.shared.clj src/runtime/prelude.java.clj > .build/temp/dex_local/Main_shared.java
+	@ cp vendor/prelude/java/src/RT.java .build/temp/dex_local/y2k
+	@ clj2js java src/main.shared.clj vendor/prelude/java/src/prelude.clj > .build/temp/dex_local/Main_shared.java
 	@ rm -rf .build/temp/dex
 	@ mkdir -p .build/temp/dex
 	@ javac -cp ~/Library/Android/sdk/platforms/android-34/android.jar -sourcepath .build/temp/dex_local -d .build/temp/dex .build/temp/dex_local/Main_shared.java
@@ -43,9 +43,9 @@ build_resources:
 build_java: build_web
 	@ mkdir -p .build/android/app/src/main/java/y2k
 	@ mkdir -p .build/android/app/src/main/java/im/y2k/chargetimer
-	@ cat src/runtime/RT.java > .build/android/app/src/main/java/y2k/RT.java
-	@ clj2js java src/main.android.clj src/runtime/prelude.java.clj > .build/android/app/src/main/java/im/y2k/chargetimer/Main_android.java
-	@ clj2js java src/main.shared.clj src/runtime/prelude.java.clj > .build/android/app/src/main/java/im/y2k/chargetimer/Main_shared.java
+	@ cat vendor/prelude/java/src/RT.java > .build/android/app/src/main/java/y2k/RT.java
+	@ clj2js java src/main.android.clj vendor/prelude/java/src/prelude.clj > .build/android/app/src/main/java/im/y2k/chargetimer/Main_android.java
+	@ clj2js java src/main.shared.clj vendor/prelude/java/src/prelude.clj > .build/android/app/src/main/java/im/y2k/chargetimer/Main_shared.java
 
 build_web:
 	@ mkdir -p .build/android/app/src/main/assets/js
