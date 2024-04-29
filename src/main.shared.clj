@@ -1,10 +1,13 @@
 (jvm! (ns im.y2k.chargetimer
-        (:import [android.webkit WebView]
-                 [android.app Activity NotificationChannel Notification NotificationManager]
+        (:import [android.app Activity NotificationChannel Notification NotificationManager]
+                 [android.app.job JobScheduler JobParameters JobInfo]
                  [android.content Intent IntentFilter Context ComponentName]
                  [android.media AudioManager RingtoneManager]
-                 [android.app.job JobScheduler JobParameters JobInfo]
-                 [java.util Objects])))
+                 [android.os Handler]
+                 [java.util Objects]
+                 [android.webkit WebView])))
+
+(def ^int LIMIT_CHARGE 80)
 
 (js!
  (defn html []
@@ -44,7 +47,7 @@
          level (.getIntExtra (.registerReceiver ctx null (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)
          m (/ (android.app.job.JobInfo/getMinPeriodMillis) 1000)
          reason (.getPendingJob (.getSystemService ctx (class JobScheduler)) 123)]
-     (.evaluateJavascript! wv (str "window.update_ui(\"#text_job_status\", \"" level "% | " m " sec | " reason "\")") null)))
+     (.evaluateJavascript! wv (str "window.update_ui(\"#text_job_status\", \"" level "% | " LIMIT_CHARGE "% | " m " sec | " reason "\")") null)))
 
  (defn- show_notification [env]
    (let [^Context context (:context env)
@@ -70,12 +73,16 @@
      (.setStreamVolume am sound_stream_id max 0)
      (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
            r (.getRingtone RingtoneManager context notification)]
-       (.play! r))))
+       (.play! r)
+       (.postDelayed
+        (Handler.)
+        (runnable (fn [] (.stop! r)))
+        1000))))
 
  (defn- job_scheduled [env]
    (let [^Context ctx (:context env)
          level (.getIntExtra (.registerReceiver ctx null (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)]
-     (if (> level 90)
+     (if (> level LIMIT_CHARGE)
        (play_alarm ctx)
        null)))
 

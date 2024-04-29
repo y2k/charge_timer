@@ -1,4 +1,4 @@
-(ns resources (:require [main-shared :as app]))
+(ns resources (:require [main.shared :as app]))
 
 (defn- html []
   [:html {:lang "ru" :data-theme "dark"}
@@ -11,9 +11,8 @@
 
 (defn- manifest []
   [:manifest {:xmlns:android "http://schemas.android.com/apk/res/android"}
-  ;;  [:uses-permission {:android:name "android.permission.INTERNET"}]
-  ;;  [:uses-permission {:android:name "android.permission.POST_NOTIFICATIONS"}]
    [:uses-permission {:android:name "android.permission.ACCESS_NOTIFICATION_POLICY"}]
+   [:uses-permission {:android:name "android.permission.POST_NOTIFICATIONS"}]
    [:application {:android:icon "@drawable/ic_launcher"
                   :android:label "@string/app_name"
                   :android:roundIcon "@drawable/ic_launcher"
@@ -31,13 +30,13 @@
 (defn- html_to_string [node]
   (let [tag (.at node 0)
         attrs (.at node 1)
-        has_attrs (and (> node.length 1) (= (type (.at node 1)) "object") (not (Array/isArray (.at node 1))))]
+        has_attrs (and (> node.length 1) (= (type (.at node 1)) "object") (not (Array.isArray (.at node 1))))]
     (if (= (type node) :string)
       node
       (str "<" tag " "
            (if (not has_attrs) ""
                (->
-                (Object/entries attrs)
+                (Object.entries attrs)
                 (.reduce (fn [a x] (str a " " (.at x 0) "='" (.at x 1) "'")) ""))) ">"
            (->
             (.slice node (if has_attrs 2 1))
