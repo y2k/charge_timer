@@ -72,10 +72,9 @@
      (let [notification (.getDefaultUri RingtoneManager RingtoneManager/TYPE_ALARM)
            r (.getRingtone RingtoneManager context notification)]
        (.play! r)
-       (.postDelayed
-        (Handler.)
-        (runnable (fn [] (.stop! r)))
-        1000))))
+       (.postDelayed (Handler.)
+                     (runnable (fn [] (.stop! r)))
+                     1000))))
 
  (defn- play_alarm_pressed [env]
    (play_alarm (:context env)))

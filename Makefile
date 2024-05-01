@@ -2,6 +2,7 @@ PRELUDE_JS_PATH := $(shell realpath vendor/prelude/js/src/prelude.clj)
 PRELUDE_JAVA_PATH := $(shell realpath vendor/prelude/java/src/prelude.clj)
 
 run: install_apk
+	@ adb shell am start -n 'im.y2k.chargetimer/.Main_android\$$MainActivity'
 
 clean:
 	@ rm -rf .build/temp
@@ -32,11 +33,11 @@ build_dex:
 install_apk: build_web build_resources build_java
 	@ docker run --rm -v ${PWD}/.build/temp/android:/root/.android -v ${PWD}/.build/temp/gradle:/root/.gradle -v ${PWD}/.build/android:/target y2khub/cljdroid build
 	@ adb install -r .build/android/app/build/outputs/apk/debug/app-debug.apk
-	@ adb shell am start -n 'im.y2k.chargetimer/.Main_android\$$MainActivity'
 
 build_resources:
-	@ mkdir -p .build/temp/node || true
+	@ mkdir -p .build/temp/node && mkdir -p .build/temp/node/runtime
 	@ clj2js js src/main.shared.clj    $(PRELUDE_JS_PATH) > .build/temp/node/main.shared.js
+	@ clj2js js src/runtime/tools.web.clj $(PRELUDE_JS_PATH) > .build/temp/node/runtime/tools.web.js
 	@ clj2js js src/main.resources.clj $(PRELUDE_JS_PATH) > .build/temp/node/main.resources.js
 	@ echo '{"type":"module"}' > .build/temp/node/package.json
 	@ node .build/temp/node/main.resources.js html > .build/android/app/src/main/assets/index.html
@@ -65,4 +66,7 @@ log:
 log_error:
 	clear && adb logcat -T 1 *:W | grep 'im.y2k.chargetimer'
 
-.PHONY: clean build_dex_reload build_dex run install_apk build_reload build_resources build_web build_java log log_error
+schedule:
+	@ adb shell "cmd jobscheduler run -f 'im.y2k.chargetimer' 123"
+
+.PHONY: schedule clean build_dex_reload build_dex run install_apk build_reload build_resources build_web build_java log log_error
