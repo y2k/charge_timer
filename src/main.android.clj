@@ -1,16 +1,9 @@
 (ns im.y2k.chargetimer (:import
-                        [android.app Activity NotificationChannel Notification NotificationManager]
-                        [android.app.job JobScheduler JobParameters JobInfo]
-                        [android.content Intent Context IntentFilter BroadcastReceiver ComponentName]
-                        [android.media AudioManager RingtoneManager]
+                        [im.y2k.chargetimer Main_shared]
+                        [android.app Activity]
+                        [android.app.job JobParameters]
                         [android.os Bundle]
-                        [android.webkit WebView JavascriptInterface]
-                        [dalvik.system DexClassLoader]
-                        [java.io File]
-                        [java.util List Objects]
-                        [java.util.function BiFunction Consumer]
-                        [java.util.stream Collectors]
-                        [im.y2k.chargetimer Main_shared]))
+                        [android.webkit JavascriptInterface WebView]))
 
 (gen-class
  :name MainActivity
@@ -26,7 +19,8 @@
     (.setJavaScriptEnabled webSettings true)
     (.setAllowUniversalAccessFromFileURLs webSettings true)
     (.addJavascriptInterface webview (WebViewJsListener. self webview) "Android")
-    (.loadUrl! webview "file:///android_asset/index.html")))
+    (.loadUrl webview "file:///android_asset/index.html")
+    unit))
 
 (gen-class
  :name WebViewJsListener
@@ -56,8 +50,9 @@
 
 (defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
   (let [[^Activity activity ^WebView wv] self.state]
-    (.runOnUiThread!
-     activity (fn! [] (dispatch {:context (.getContext wv) :webview wv} event payload)))))
+    (.runOnUiThread
+     activity (fn! [] (dispatch {:context (.getContext wv) :webview wv} event payload)))
+    unit))
 
 (gen-class
  :name ChargeJobService

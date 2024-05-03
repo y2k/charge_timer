@@ -52,7 +52,6 @@ build_java: build_web
 
 build_web:
 	@ mkdir -p .build/android/app/src/main/assets/js
-	@ cp -f vendor/prelude/js/src/prelude.js .build/android/app/src/main/assets/js/
 	@ cp -f vendor/prelude/js/src/prelude.clj .build/android/app/src/main/assets/js/
 	@ cp -f src/main.web.clj .build/android/app/src/main/assets/js/
 	@ cd .build/android/app/src/main/assets/js && clj2js js main.web.clj ./prelude.clj > main.js && rm *.clj
