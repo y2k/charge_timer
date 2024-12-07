@@ -51,7 +51,8 @@
 (defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
   (let [[^Activity activity ^WebView wv] self.state]
     (.runOnUiThread
-     activity (fn! [] (dispatch {:context (.getContext wv) :webview wv} event payload)))
+     activity (runnable
+               (fn! [] (dispatch {:context (.getContext wv) :webview wv} event payload))))
     unit))
 
 (gen-class

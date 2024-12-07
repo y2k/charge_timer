@@ -80,7 +80,7 @@
         1000))))
 
  (defn- play_alarm_pressed [env]
-   (play_alarm (:context env)))
+   (play_alarm (as (:context env) Context)))
 
  (defn- job_scheduled [env]
    (let [^Context ctx (:context env)
