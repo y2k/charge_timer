@@ -34,7 +34,7 @@ build_dex_reload: build_dex
 build_dex:
 	@ rm -rf .build/temp/dex_local
 	@ mkdir -p .build/temp/dex_local/y2k
-	@ cp vendor/prelude/java/src/RT.java .build/temp/dex_local/y2k
+	@ cp $(shell dirname $(PRELUDE_JAVA_PATH))/RT.java .build/temp/dex_local/y2k
 	@ clj2js java src/main.shared.clj $(PRELUDE_JAVA_PATH) > .build/temp/dex_local/Main_shared.java
 	@ rm -rf .build/temp/dex
 	@ mkdir -p .build/temp/dex
@@ -50,7 +50,7 @@ install_apk: build_web build_resources build_java
 .PHONY: build_resources
 build_resources:
 	@ mkdir -p .build/temp/node && mkdir -p .build/temp/node/runtime
-	@ clj2js js src/main.shared.clj    $(PRELUDE_JS_PATH) > .build/temp/node/main.shared.js
+	@ clj2js js src/main.shared.clj $(PRELUDE_JS_PATH) > .build/temp/node/main.shared.js
 	@ clj2js js src/runtime/tools.web.clj $(PRELUDE_JS_PATH) > .build/temp/node/runtime/tools.web.js
 	@ clj2js js src/main.resources.clj $(PRELUDE_JS_PATH) > .build/temp/node/main.resources.js
 	@ echo '{"type":"module"}' > .build/temp/node/package.json
@@ -62,7 +62,7 @@ build_web:
 	@ mkdir -p .build/android/app/src/main/assets/js
 	@ cp -f vendor/prelude/js/src/prelude.clj .build/android/app/src/main/assets/js/
 	@ cp -f src/main.web.clj .build/android/app/src/main/assets/js/
-	@ cd .build/android/app/src/main/assets/js && clj2js js main.web.clj ./prelude.clj > main.js && rm *.clj
+	@ cd .build/android/app/src/main/assets/js && clj2js js main.web.clj $(PRELUDE_JS_PATH) > main.js && rm *.clj
 
 .PHONY: docker_extract
 docker_extract:
