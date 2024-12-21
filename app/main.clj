@@ -1,9 +1,9 @@
-(ns im.y2k.chargetimer (:import
-                        [im.y2k.chargetimer Main_shared]
-                        [android.app Activity]
-                        [android.app.job JobParameters]
-                        [android.os Bundle]
-                        [android.webkit JavascriptInterface WebView]))
+(ns _ (:import
+       [android.app Activity]
+       [android.app.job JobParameters]
+       [android.os Bundle]
+       [android.webkit JavascriptInterface WebView])
+    (:require ["./shared" :as ms]))
 
 (gen-class
  :name MainActivity
@@ -30,7 +30,7 @@
  :methods [[^JavascriptInterface dispatch [String String] void]])
 
 (defn dispatch [env event payload]
-  (Main_shared/dispatch env event payload)
+  (ms/dispatch env event payload)
   ;; (let [^Context context (:context env)
   ;;       f (File. (.getFilesDir context) "classes.dex")]
   ;;   (if (.exists f) null
