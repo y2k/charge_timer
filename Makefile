@@ -1,42 +1,22 @@
-PRELUDE_JS_PATH := $(shell realpath vendor/prelude/js/src/prelude.clj)
-PRELUDE_JAVA_PATH := $(shell realpath vendor/prelude/java/src/prelude.clj)
+.PHONY: test
+test: build
 
 .PHONY: build
-build: gen_build
-	@ export PRELUDE_JAVA=$(PRELUDE_JAVA_PATH) \
-		&& export PRELUDE_JS=$(PRELUDE_JS_PATH) \
-		&& .build/build.gen.sh
-	@ node .build/bin/build/build.js html > .build/android/app/src/main/assets/index.html
-	@ node .build/bin/build/build.js manifest > .build/android/app/src/main/AndroidManifest.xml
-	@ mkdir -p .build/android/app/src/main/java/y2k \
-		&& cp $(shell dirname $(PRELUDE_JAVA_PATH))/RT.java .build/android/app/src/main/java/y2k/RT.java
-
-.PHONE: gen_build
-gen_build:
-	@ export OCAMLRUNPARAM=b && clj2js make_build_script \
-		-lang java \
-		-path app \
-		-target .build/android/app/src/main/java \
-		> .build/build.gen.sh
-	@ export OCAMLRUNPARAM=b && clj2js make_build_script \
-		-lang js \
-		-path web \
-		-target .build/android/app/src/main/assets \
-		>> .build/build.gen.sh
-	@ export OCAMLRUNPARAM=b && clj2js make_build_script \
-		-lang js \
-		-path build \
-		-target .build/bin \
-		>> .build/build.gen.sh
+build:
+	@ export OCAMLRUNPARAM=b && \
+		clj2js compile -target repl -src build/build.clj > .build/build.gen.sh
 	@ chmod +x .build/build.gen.sh
-
-.PHONY: install_apk
-install_apk: build
+	@ .build/build.gen.sh
+	@ mkdir -p .build/android/app/src/main/java/y2k
+	@ clj2js gen -target java > .build/android/app/src/main/java/y2k/RT.java
 	@ docker run --rm \
 		-v ${PWD}/.build/temp/android:/root/.android \
 		-v ${PWD}/.build/temp/gradle:/root/.gradle \
 		-v ${PWD}/.build/android:/target \
 		y2khub/cljdroid build
+
+.PHONY: install_apk
+install_apk: build
 	@ adb install -r .build/android/app/build/outputs/apk/debug/app-debug.apk
 	@ adb shell am start -n 'im.y2k.chargetimer/app.main\$$MainActivity'
 
