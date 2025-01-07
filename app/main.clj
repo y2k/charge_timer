@@ -30,23 +30,7 @@
  :methods [[^JavascriptInterface dispatch [String String] void]])
 
 (defn dispatch [env event payload]
-  (ms/dispatch env event payload)
-  ;; (let [^Context context (:context env)
-  ;;       f (File. (.getFilesDir context) "classes.dex")]
-  ;;   (if (.exists f) null
-  ;;       (throw (RuntimeException. (str
-  ;;                                  "File not found: classes.dex | "
-  ;;                                  (.getFilesDir context) " | "
-  ;;                                  (.listFiles (.getFilesDir context))))))
-  ;;   (->
-  ;;    (DexClassLoader.
-  ;;     (.getAbsolutePath f)
-  ;;     null null (ClassLoader/getSystemClassLoader))
-  ;;    (.loadClass "im.y2k.chargetimer.Main_shared")
-  ;;    (.getMethod "dispatch" (class Object) (class Object) (class Object))
-  ;;    (.invoke null env event payload)
-  ;;    checked!))
-  )
+  (ms/dispatch env event payload))
 
 (defn- wv_dispatch [^WebViewJsListener self ^String event ^String payload]
   (let [[^Activity activity ^WebView wv] self.state]
@@ -64,7 +48,7 @@
            [onStopJob [JobParameters] boolean]])
 
 (defn cj_onStartJob [^ChargeJobService self ^JobParameters p]
-  (dispatch {:context self} :job_started null)
+  (dispatch {:context self} :job_started nil)
   false)
 
 (defn cj_onStopJob [^ChargeJobService self ^JobParameters p]

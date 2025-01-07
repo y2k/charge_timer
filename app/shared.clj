@@ -13,10 +13,10 @@
 (defn- get_status [env]
   (let [^Context ctx (:context env)
         ^WebView wv (:webview env)
-        level (.getIntExtra (.registerReceiver ctx null (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)
+        level (.getIntExtra (.registerReceiver ctx nil (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)
         m (/ (JobInfo/getMinPeriodMillis) 1000)
         reason (.getPendingJob (.getSystemService ctx (class JobScheduler)) 123)]
-    (.evaluateJavascript wv (str "window.update_ui(\"#text_job_status\", \"" level "% | " LIMIT_CHARGE "% | " m " sec | " reason "\")") null)
+    (.evaluateJavascript wv (str "window.update_ui(\"#text_job_status\", \"" level "% | " LIMIT_CHARGE "% | " m " sec | " reason "\")") nil)
     unit))
 
 (defn- start_job [env]
@@ -70,10 +70,10 @@
 
 (defn- job_scheduled [env]
   (let [^Context ctx (:context env)
-        level (.getIntExtra (.registerReceiver ctx null (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)]
+        level (.getIntExtra (.registerReceiver ctx nil (IntentFilter. Intent/ACTION_BATTERY_CHANGED)) "level" -1)]
     (if (> level LIMIT_CHARGE)
       (play_alarm ctx)
-      null)))
+      nil)))
 
 (defn dispatch [env event payload]
   (case event
