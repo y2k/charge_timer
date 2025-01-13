@@ -1,5 +1,5 @@
 .PHONY: test
-test: build
+test: clean build
 
 .PHONY: build
 build:
@@ -22,7 +22,6 @@ install_apk: build
 
 .PHONY: clean
 clean:
-	@ rm -rf .build/temp
 	@ rm -rf .build/android/app/src/main/java
 	@ rm -rf .build/android/app/src/main/assets/js
 	@ rm -f .build/android/app/src/main/assets/index.html
